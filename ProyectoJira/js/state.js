@@ -1,48 +1,72 @@
-const API_URL = "http://localhost:8080/TasksAPI/api/task"
+const API_URL = 'http://localhost:8080/TasksAPI/api/task';
 
 export let tasks = [];
 
-//GET Obtener todas las tareas
-export const getTasks = async () => {
-    const reponse = await fetch(API_URL);
-    tasks = await reponse.json();
+// GET: Obtener todas las tareas de la base de datos
+export const fetchTasks = async () => {
+    const response = await fetch(API_URL);
+    tasks = await response.json(); // Tu Servlet devuelve un JSON
     return tasks;
-}
+};
 
-//POST Crear una tarea
+// POST: Crear una nueva tarea
 export const addTask = async (text) => {
-    const response = await fetch(
-        API_URL,
-        {
-            method: "POST",
-            headers: { 'Content-Type': "application/json" },
-            body: JSON.stringify({ text: text, completed: false })
-        }
-    );
+    const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, completed: false })
+    });
     const newTask = await response.json();
     tasks.push(newTask);
     return tasks;
-}
+};
 
-export const deleteTask = (id) => {
+// DELETE: Eliminar de la base de datos
+export const deleteTask = async (id) => {
+    await fetch(`${API_URL}?id=${id}`, {
+        method: 'DELETE'
+    });
+    // Si el servidor responde bien, la quitamos de la vista
     tasks = tasks.filter(t => t.id !== id);
     return tasks;
-}
+};
 
-export const toggleTask = (id) => {
+// PUT: Alternar completado
+export const toggleTask = async (id) => {
     const task = tasks.find(t => t.id === id);
-    if (task) {
-        task.completed = !task.completed;
-    }
+    if (!task) return;
+
+    // Preparamos el objeto con el estado invertido
+    const updatedTask = { ...task, completed: !task.completed };
+
+    const response = await fetch(API_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTask)
+    });
+
+    const savedTask = await response.json();
+    task.completed = savedTask.completed; // Sincronizamos
     return tasks;
-}
+};
 
-export const editTask = (id, newTask) => {
+// PUT: Editar texto
+export const editTask = async (id, newText) => {
     const task = tasks.find(t => t.id === id);
-    if (task) {
-        task.text = newTask;
-    }
-}
+    if (!task) return;
+
+    const updatedTask = { ...task, text: newText };
+
+    const response = await fetch(API_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTask)
+    });
+
+    const savedTask = await response.json();
+    task.text = savedTask.text; // Sincronizamos
+    return tasks;
+};
 
 
 
